@@ -61,10 +61,10 @@ class HBNBCommand(cmd.Cmd):
             "count": self.do_count
         }
         # Match all characters before a period
-        pattern = r'(.*)\.'
+        pattern = r'^.*?(?=\.)'
         match = re.search(pattern, line)
         if match:
-            match_class = match.group(1)
+            match_class = match.group()
             if match_class not in HBNBCommand.cls_dict.keys():
                 print("** class doesn't exist **")
                 return
@@ -81,17 +81,70 @@ class HBNBCommand(cmd.Cmd):
                     print("** unknown syntax **")
                     return
                 lst = list(argdict.keys())
+                pattern_3 = r'\((.*?)\)'
+                match_3 = re.search(pattern_3, line)
+                pattern_4 = r'"(.*?)"'
+                match_4 = re.search(pattern_4, line)
+                pattern_5 = r"'(.*?)'"
+                match_5 = re.search(pattern_5, line)
                 if key == lst[0] or key == lst[3] or key == lst[5]:
                     if match_cmd == key:
                         value(match_class)
                         return
+                elif key == lst[4]:
+                    if match_cmd == key:
+                        if match_3:
+                            match_txt = match_3.group(1)
+                            lst_args = re.split(r',', match_txt)
+                            list_args = []
+                            for lst_arg in lst_args:
+                                lst_arg = lst_arg.strip()
+                                lst_arg = lst_arg.strip("'")
+                                lst_arg = lst_arg.strip('"')
+                                list_args.append(lst_arg)
+                            if match_txt == '':
+                                value(match_class)
+#                                print("** instance id missing **")
+                                return
+                            if len(list_args) == 1:
+                                value("{} {}".format(
+                                    match_class, list_args[0]))
+#                                print("** attribute name missing **")
+                                return
+                            pattern_6 = r'\{([^}]+)\}'
+                            match_6 = re.search(pattern_6, match_txt)
+                            if match_6:
+                                pattern_7 = r'(?<=,).*'
+                                match_7 = re.search(pattern_7, match_txt)
+                                match_dict = match_7.group().strip()
+                                match_dict = match_dict.strip("{}")
+                                kwargs_pairs = match_dict.split(',')
+                                final_dict = {}
+                                for pair in kwargs_pairs:
+                                    pair = pair.strip()
+                                    key_a, val_a = pair.split(':')
+                                    key_a, val_a = key_a.strip(), val_a.strip()
+                                    key_a, val_a = key_a.strip("'"),\
+                                        val_a.strip("'")
+                                    key_a, val_a = key_a.strip('"'),\
+                                        val_a.strip('"')
+                                    final_dict[key_a] = val_a
+                                for key_0, val_0 in final_dict.items():
+                                    value("{} {} {} {}".format(match_class,
+                                          list_args[0], key_0, val_0))
+                            else:
+                                if len(list_args) == 2:
+                                    value("{} {} {}".format(match_class,
+                                          list_args[0], list_args[1]))
+                                    return
+                                elif len(list_args) == 3:
+                                    argm_string = "{} {} {} {}".format(match_class,
+                                          list_args[0], list_args[1], list_args[2])
+                                    value(argm_string)
+                        else:
+                            print("** unknown syntax **")
+                            return
                 else:
-                    pattern_3 = r'\((.*?)\)'
-                    match_3 = re.search(pattern_3, line)
-                    pattern_4 = r'"(.*?)"'
-                    match_4 = re.search(pattern_4, line)
-                    pattern_5 = r"'(.*?)'"
-                    match_5 = re.search(pattern_5, line)
                     if match_3 or match_4 or match_5:
                         if match_3 and match_4:
                             match_text = match_4.group(1)
@@ -223,6 +276,7 @@ class HBNBCommand(cmd.Cmd):
         instance = all_objects[key]
         setattr(instance, attribute_name, attribute_value)
         instance.save()
+        print("Record Updated")
 
     def do_count(self, arg):
         """Retrieve the number of instances of a class"""
